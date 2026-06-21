@@ -59,32 +59,34 @@ def fetch_zcyc(query_date: str) -> dict | None:
 
     trade_date = rows[0][cols.index("tradedate")]
 
-    # Кубический сплайн — гладкая кривая между точками MOEX
-    cs = CubicSpline(periods, yields, extrapolate=False)
-
+    # Возвращаем только сериализуемые данные — сплайн строится отдельно
     return {
-        "spline":       cs,
-        "periods":      periods,
-        "yields":       yields,
+        "periods":      periods.tolist(),
+        "yields":       yields.tolist(),
         "date":         trade_date,
         "model_params": model_params,
     }
 
 
-def gcurve_value(result: dict, m: float) -> float | None:
-    """Значение G-curve (%) для срока m лет через кубический сплайн."""
-    if m < result["periods"][0] or m > result["periods"][-1]:
-        # За пределами диапазона — линейная экстраполяция по крайним точкам
-        if m < result["periods"][0]:
-            x0, x1 = result["periods"][0], result["periods"][1]
-            y0, y1 = result["yields"][0],  result["yields"][1]
-        else:
-            x0, x1 = result["periods"][-2], result["periods"][-1]
-            y0, y1 = result["yields"][-2],  result["yields"][-1]
-        slope = (y1 - y0) / (x1 - x0)
-        return float(y0 + slope * (m - x0))
-    val = result["spline"](m)
-    return float(val)
+def gcurve_value(result: dict, m: float) -> float:
+    """
+    Значение G-curve (%) для срока m лет.
+    Сплайн строится из кешированных списков — операция быстрая (11 точек).
+    """
+    periods = np.array(result["periods"])
+    yields  = np.array(result["yields"])
+
+    if m <= periods[0]:
+        # Линейная экстраполяция влево
+        slope = (yields[1] - yields[0]) / (periods[1] - periods[0])
+        return float(yields[0] + slope * (m - periods[0]))
+    if m >= periods[-1]:
+        # Линейная экстраполяция вправо
+        slope = (yields[-1] - yields[-2]) / (periods[-1] - periods[-2])
+        return float(yields[-1] + slope * (m - periods[-1]))
+
+    cs = CubicSpline(periods, yields)
+    return float(cs(m))
 
 
 # ─────────────────────────────────────────────
