@@ -197,7 +197,7 @@ if "error" in main_res:
 # Значение G-curve для выбранного срока — показываем в sidebar сразу
 g_main = gcurve_value(main_res, maturity_input)
 eff_base = effective_yield(coupon_input, periods_input)
-spread_base = (eff_base - g_main -) * 100  # G-curve - Доходность
+spread_base = (eff_base - g_main) * 100  # G-curve - Доходность
 
 # Блок результатов в sidebar
 st.sidebar.markdown("---")
