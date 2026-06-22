@@ -108,7 +108,7 @@ def build_spread_table(base_coupon: float, maturity: float,
     for bp in offsets_bp:
         c = base_coupon + bp * 0.01     # 1 б.п. = 0.01%
         ey = effective_yield(c, periods)
-        spread = (g_val-ey) * 100     # % → б.п.
+        spread = (ey-g_val) * 100     # % → б.п.
         rows.append({
             "Купон, %":                    round(c, 4),
             "Периодичность":               periods,
@@ -204,7 +204,7 @@ st.sidebar.metric(
     value=f"{g_main:.4f} %",
 )
 eff_base = effective_yield(coupon_input, periods_input)
-spread_base = (g_main - eff_base) * 100
+spread_base = (eff_base - g_main) * 100
 st.sidebar.metric(
     label=f"Эфф. доходность купона {coupon_input}%",
     value=f"{eff_base:.4f} %",
