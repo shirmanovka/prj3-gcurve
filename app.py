@@ -204,7 +204,7 @@ st.sidebar.metric(
     value=f"{g_main:.4f} %",
 )
 eff_base = effective_yield(coupon_input, periods_input)
-spread_base = (eff_base - g_main) * 100
+spread_base = (g_main - eff_base) * 100
 st.sidebar.metric(
     label=f"Эфф. доходность купона {coupon_input}%",
     value=f"{eff_base:.4f} %",
