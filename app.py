@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 import requests
 from datetime import date, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 from scipy.interpolate import CubicSpline
 
 # ─────────────────────────────────────────────
@@ -17,6 +18,13 @@ st.set_page_config(
 
 MOEX_ZCYC_URL = "https://iss.moex.com/iss/engines/stock/zcyc/securities.json"
 PLOT_MATURITIES = np.arange(0.25, 20.25, 0.25)   # до 20 лет — крайняя точка MOEX
+
+
+def math_round(value: float, decimals: int = 2) -> float:
+    """Математическое округление (0.5 всегда вверх)."""
+    d = Decimal(str(value))
+    quant = Decimal('0.' + '0' * decimals) if decimals > 0 else Decimal('0')
+    return float(d.quantize(quant, rounding=ROUND_HALF_UP))
 
 # ─────────────────────────────────────────────
 # ПОЛУЧЕНИЕ ДАННЫХ С MOEX
@@ -110,11 +118,11 @@ def build_spread_table(base_coupon: float, maturity: float,
         ey = effective_yield(c, periods)
         spread = (ey-g_val) * 100     # % → б.п.
         rows.append({
-            "Купон, %":                    round(c, 4),
+            "Купон, %":                    math_round(c, 2),
             "Периодичность":               periods,
-            "Эффективная доходность, %":   round(ey, 4),
-            "G-curve, %":                  round(g_val, 4),
-            "Спред, б.п.":                 round(spread, 2),
+            "Эффективная доходность, %":   math_round(ey, 2),
+            "G-curve, %":                  math_round(g_val, 2),
+            "Спред, б.п.":                 math_round(spread, 2),
         })
     return pd.DataFrame(rows)
 
@@ -131,7 +139,7 @@ if st.sidebar.button("🔄 Обновить данные"):
 # Основная дата
 main_date: date = st.sidebar.date_input(
     "Основная дата",
-    value=date.today() - timedelta(days=1),
+    value=date.today(),
     max_value=date.today(),
 )
 
@@ -178,7 +186,7 @@ maturity_input = st.sidebar.number_input(
     value=3.0, step=0.25, format="%.2f",
 )
 periods_input = st.sidebar.selectbox(
-    "Периодичность выплат", options=[1, 2, 4, 12], index=1,
+    "Периодичность выплат", options=[1, 2, 4, 12], index=3,
 )
 
 # ─────────────────────────────────────────────
@@ -201,14 +209,17 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("**Результат расчёта**")
 st.sidebar.metric(
     label=f"G-curve на {maturity_input} лет (дата {main_res['date']})",
-    value=f"{g_main:.4f} %",
+    value=f"{math_round(g_main):.2f} %",
 )
 eff_base = effective_yield(coupon_input, periods_input)
 spread_base = (eff_base - g_main) * 100
 st.sidebar.metric(
     label=f"Эфф. доходность купона {coupon_input}%",
-    value=f"{eff_base:.4f} %",
-    delta=f"{spread_base:+.1f} б.п. к G-curve",
+    value=f"{math_round(eff_base):.2f} %",
+)
+st.sidebar.metric(
+    label="Спред к G-curve",
+    value=f"{math_round(spread_base):.2f} б.п.",
 )
 
 # ─────────────────────────────────────────────
@@ -239,7 +250,7 @@ fig.add_trace(go.Scatter(
     mode="markers+text",
     name=f"Срок {maturity_input} лет",
     marker=dict(size=12, color="red", symbol="x"),
-    text=[f"{g_main:.2f}%"],
+    text=[f"{math_round(g_main):.2f}%"],
     textposition="top center",
     showlegend=False,
 ))
@@ -301,7 +312,7 @@ with rc2:
 with rc3:
     if calc_btn:
         val = gcurve_value(main_res, manual_m)
-        st.success(f"G-curve на **{manual_m}** лет = **{val:.4f}%**")
+        st.success(f"G-curve на **{manual_m}** лет = **{math_round(val):.2f}%**")
 
 # ─────────────────────────────────────────────
 # ТАБЛИЦА РАСЧЁТА СПРЕДА
@@ -312,7 +323,7 @@ st.subheader("Расчёт спреда для размещения")
 info_cols = st.columns(3)
 info_cols[0].metric("Дата расчёта", main_res["date"])
 info_cols[1].metric("Срок", f"{maturity_input} лет")
-info_cols[2].metric("G-curve на этот срок", f"{g_main:.4f}%")
+info_cols[2].metric("G-curve на этот срок", f"{math_round(g_main):.2f}%")
 
 spread_df = build_spread_table(coupon_input, maturity_input, periods_input, g_main)
 
@@ -325,9 +336,9 @@ styled = (
     spread_df.style
     .apply(highlight_base, axis=1)
     .format({
-        "Купон, %":                  "{:.4f}",
-        "Эффективная доходность, %": "{:.4f}",
-        "G-curve, %":                "{:.4f}",
+        "Купон, %":                  "{:.2f}",
+        "Эффективная доходность, %": "{:.2f}",
+        "G-curve, %":                "{:.2f}",
         "Спред, б.п.":               "{:.2f}",
     })
     .bar(subset=["Спред, б.п."], color=["#f4a9a8", "#a8d5b5"], align="zero")
