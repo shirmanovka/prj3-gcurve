@@ -196,19 +196,39 @@ if "error" in main_res:
 
 # Значение G-curve для выбранного срока — показываем в sidebar сразу
 g_main = gcurve_value(main_res, maturity_input)
+eff_base = effective_yield(coupon_input, periods_input)
+spread_base = (g_main - eff_base) * 100  # G-curve - Доходность
 
+# Блок результатов в sidebar
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Результат расчёта**")
-st.sidebar.metric(
-    label=f"G-curve на {maturity_input} лет (дата {main_res['date']})",
-    value=f"{g_main:.4f} %",
-)
-eff_base = effective_yield(coupon_input, periods_input)
-spread_base = (eff_base - g_main) * 100
-st.sidebar.metric(
-    label=f"Эфф. доходность купона {coupon_input}%",
-    value=f"{eff_base:.4f} %",
-    delta=f"{spread_base:+.1f} б.п. к G-curve",
+
+# Создаем красивый блок с результатами
+st.sidebar.markdown(
+    f"""
+    <div style="
+        background-color: #f0f2f6;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 10px 0;
+    ">
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0;">
+            <span style="font-size: 14px; color: #666;">G-curve на {maturity_input} лет</span>
+            <span style="font-size: 18px; font-weight: 600; color: #1f77b4;">{g_main:.4f}%</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0;">
+            <span style="font-size: 14px; color: #666;">Эфф. доходность ({coupon_input}%)</span>
+            <span style="font-size: 18px; font-weight: 600; color: #2ca02c;">{eff_base:.4f}%</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+            <span style="font-size: 14px; color: #666; font-weight: 500;">Спред</span>
+            <span style="font-size: 20px; font-weight: 700; color: {'#00a65a' if spread_base > 0 else '#dd4b39'};">
+                {'+' if spread_base > 0 else ''}{spread_base:.1f} б.п.
+            </span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
 )
 
 # ─────────────────────────────────────────────
