@@ -301,18 +301,49 @@ st.markdown("---")
 st.subheader("Ручной расчёт G-curve")
 st.caption(f"Дата: **{main_res['date']}**")
 
-rc1, rc2, rc3 = st.columns([2, 1, 3])
-with rc1:
-    manual_m = st.number_input(
-        "Срок (лет)", min_value=0.25, max_value=20.0,
-        value=3.0, step=0.25, format="%.2f", key="manual_m",
+left_block, right_block = st.columns(2)
+
+with left_block:
+    rc1, rc2, rc3 = st.columns([2, 1, 3])
+    with rc1:
+        manual_m = st.number_input(
+            "Срок (лет)", min_value=0.25, max_value=20.0,
+            value=3.0, step=0.25, format="%.2f", key="manual_m",
+        )
+    with rc2:
+        calc_btn = st.button("Рассчитать", use_container_width=True)
+    with rc3:
+        if calc_btn:
+            val = gcurve_value(main_res, manual_m)
+            st.success(f"G-curve на **{manual_m}** лет = **{math_round(val):.2f}%**")
+
+with right_block:
+    st.markdown("**Расчёт доходности и купона по спреду**")
+    sc1, sc2, sc3 = st.columns(3)
+    with sc1:
+        spread_bp_input = st.number_input(
+            "Спред (б.п.)", min_value=-1000.0, max_value=5000.0,
+            value=100.0, step=5.0, format="%.0f", key="spread_bp",
+        )
+    with sc2:
+        spread_m_input = st.number_input(
+            "Срок (лет)", min_value=0.25, max_value=20.0,
+            value=3.0, step=0.25, format="%.2f", key="spread_m",
+        )
+    with sc3:
+        spread_periods_input = st.selectbox(
+            "Периодичность", options=[1, 2, 4, 12], index=1, key="spread_periods",
+        )
+
+    spread_yield = gcurve_value(main_res, spread_m_input) + spread_bp_input / 100
+    spread_coupon = (
+        ((1 + spread_yield / 100) ** (1 / spread_periods_input) - 1)
+        * 100 * spread_periods_input
     )
-with rc2:
-    calc_btn = st.button("Рассчитать", use_container_width=True)
-with rc3:
-    if calc_btn:
-        val = gcurve_value(main_res, manual_m)
-        st.success(f"G-curve на **{manual_m}** лет = **{math_round(val):.2f}%**")
+
+    sr1, sr2 = st.columns(2)
+    sr1.metric("Доходность", f"{math_round(spread_yield):.2f}%")
+    sr2.metric("Купон", f"{math_round(spread_coupon):.2f}%")
 
 # ─────────────────────────────────────────────
 # ТАБЛИЦА РАСЧЁТА СПРЕДА
@@ -356,4 +387,4 @@ st.download_button(
 )
 
 st.markdown("---")
-st.caption("Источник: MOEX ISS ZCYC | Интерполяция: CubicSpline (scipy)")
+st.caption("Автор проекта: Ширманов К.А. | tg: [shirman7](tg://resolve?domain=shirman7)")
