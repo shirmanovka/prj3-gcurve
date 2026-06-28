@@ -298,12 +298,12 @@ with st.expander(f"Параметры модели MOEX за {main_res['date']}"
 # РУЧНОЙ РАСЧЁТ G-CURVE
 # ─────────────────────────────────────────────
 st.markdown("---")
-st.subheader("Ручной расчёт G-curve")
-st.caption(f"Дата: **{main_res['date']}**")
 
 left_block, right_block = st.columns(2)
 
 with left_block:
+    st.subheader("Ручной расчёт G-curve")
+    st.caption(f"Дата: **{main_res['date']}**")
     rc1, rc2, rc3 = st.columns([2, 1, 3])
     with rc1:
         manual_m = st.number_input(
@@ -318,7 +318,7 @@ with left_block:
             st.success(f"G-curve на **{manual_m}** лет = **{math_round(val):.2f}%**")
 
 with right_block:
-    st.markdown("**Расчёт доходности и купона по спреду**")
+    st.subheader("Расчёт доходности и купона по спреду")
     sc1, sc2, sc3 = st.columns(3)
     with sc1:
         spread_bp_input = st.number_input(
