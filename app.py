@@ -302,7 +302,7 @@ st.markdown("---")
 left_block, right_block = st.columns(2)
 
 with left_block:
-    st.subheader("Ручной расчёт G-curve")
+    st.subheader("Расчёт G-curve по сроку")
     st.caption(f"Дата: **{main_res['date']}**")
     rc1, rc2, rc3 = st.columns([2, 1, 3])
     with rc1:
@@ -318,7 +318,7 @@ with left_block:
             st.success(f"G-curve на **{manual_m}** лет = **{math_round(val):.2f}%**")
 
 with right_block:
-    st.subheader("Расчёт доходности и купона по спреду")
+    st.subheader("Расчёт доходности по спреду")
     sc1, sc2, sc3 = st.columns(3)
     with sc1:
         spread_bp_input = st.number_input(
@@ -332,7 +332,7 @@ with right_block:
         )
     with sc3:
         spread_periods_input = st.selectbox(
-            "Периодичность", options=[1, 2, 4, 12], index=1, key="spread_periods",
+            "Периодичность", options=[1, 2, 4, 12], index=3, key="spread_periods",
         )
 
     spread_yield = gcurve_value(main_res, spread_m_input) + spread_bp_input / 100
